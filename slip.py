@@ -51,6 +51,8 @@ class Enlace:
         # TODO: Preencha aqui com o código para enviar o datagrama pela linha
         # serial, fazendo corretamente a delimitação de quadros e o escape de
         # sequências especiais, de acordo com o protocolo CamadaEnlace (RFC 1055).
+        datagrama=self.corrigeXBD(datagrama)
+        datagrama=self.removeESC(datagrama)
         datagrama=b'\xc0'+datagrama+b'\xc0'
         self.linha_serial.enviar(datagrama)
         pass
@@ -64,3 +66,24 @@ class Enlace:
         # apenas pedaços de um quadro, ou um pedaço de quadro seguido de um
         # pedaço de outro, ou vários quadros de uma vez só.
         pass
+
+    def corrigeXBD(self, datagrama):
+
+        if b'\xdb' in (datagrama):
+            datagramaP1= self.corrigeXBD((datagrama.split(b'\xdb')[0]))
+            datagramaP2= self.corrigeXBD((datagrama.split(b'\xdb')[1]))
+
+            return datagramaP1+b'\xdb\xdd'+datagramaP2
+
+        else:
+
+            return datagrama
+
+    def removeESC(self, datagrama):
+
+        while b'\xc0' in (datagrama):
+            datagramaP1=(datagrama.split(b'\xc0')[0])
+            datagramaP2=(datagrama.split(b'\xc0')[1])
+            datagrama=datagramaP1+b'\xdb\xdc'+datagramaP2
+            
+        return datagrama
