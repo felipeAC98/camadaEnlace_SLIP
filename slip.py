@@ -43,6 +43,7 @@ class Enlace:
     def __init__(self, linha_serial):
         self.linha_serial = linha_serial
         self.linha_serial.registrar_recebedor(self.__raw_recv)
+        self.dados =b''
 
     def registrar_recebedor(self, callback):
         self.callback = callback
@@ -65,6 +66,28 @@ class Enlace:
         # vir quebrado de várias formas diferentes - por exemplo, podem vir
         # apenas pedaços de um quadro, ou um pedaço de quadro seguido de um
         # pedaço de outro, ou vários quadros de uma vez só.
+
+        if b'\xc0' in dados:
+
+            dadosAEnviar=self.dados+dados.split(b'\xc0')[0]
+
+            #enviando o pacote formado pelo xc0 somente quando tem algo nele
+            if len(dadosAEnviar)>0:
+                self.callback(dadosAEnviar)
+
+            #verificando se possui mais dados nesse pacote para chamar novamente a funcao
+            if b'\xc0' in dados.split(b'\xc0',1)[1]:
+                self.dados=b''
+                self.__raw_recv(dados.split(b'\xc0',1)[1])
+
+            else:                
+                self.dados=dados.split(b'\xc0')[1]
+
+        else:
+
+            self.dados=self.dados+dados
+
+
         pass
 
     def corrigeXBD(self, datagrama):
