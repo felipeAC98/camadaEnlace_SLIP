@@ -71,6 +71,10 @@ class Enlace:
 
             dadosAEnviar=self.dados+dados.split(b'\xc0')[0]
 
+            dadosAEnviar=self.removeCorrecaoXBD(dadosAEnviar)
+
+            dadosAEnviar=self.removeCorrecaoESC(dadosAEnviar)
+
             #enviando o pacote formado pelo xc0 somente quando tem algo nele
             if len(dadosAEnviar)>0:
                 self.callback(dadosAEnviar)
@@ -90,11 +94,35 @@ class Enlace:
 
         pass
 
+    def removeCorrecaoESC(self, dados):
+
+        if b'\xdb\xdc' in (dados):
+            dadosP1= self.corrigeXBD((dados.split(b'\xdb\xdc',1)[0]))
+            dadosP2= self.corrigeXBD((dados.split(b'\xdb\xdc',1)[1]))
+
+            return dadosP1+b'\xc0'+dadosP2
+ 
+        else:
+
+            return dados       
+
+    def removeCorrecaoXBD(self, dados):
+
+        if b'\xdb\xdd' in (dados):
+            dadosP1= self.corrigeXBD((dados.split(b'\xdb\xdd',1)[0]))
+            dadosP2= self.corrigeXBD((dados.split(b'\xdb\xdd',1)[1]))
+
+            return dadosP1+b'\xdb'+dadosP2
+ 
+        else:
+
+            return dados         
+
     def corrigeXBD(self, datagrama):
 
         if b'\xdb' in (datagrama):
-            datagramaP1= self.corrigeXBD((datagrama.split(b'\xdb')[0]))
-            datagramaP2= self.corrigeXBD((datagrama.split(b'\xdb')[1]))
+            datagramaP1= self.corrigeXBD((datagrama.split(b'\xdb',1)[0]))
+            datagramaP2= self.corrigeXBD((datagrama.split(b'\xdb',1)[1]))
 
             return datagramaP1+b'\xdb\xdd'+datagramaP2
 
@@ -105,8 +133,8 @@ class Enlace:
     def removeESC(self, datagrama):
 
         while b'\xc0' in (datagrama):
-            datagramaP1=(datagrama.split(b'\xc0')[0])
-            datagramaP2=(datagrama.split(b'\xc0')[1])
+            datagramaP1=(datagrama.split(b'\xc0',1)[0])
+            datagramaP2=(datagrama.split(b'\xc0',1)[1])
             datagrama=datagramaP1+b'\xdb\xdc'+datagramaP2
             
         return datagrama
